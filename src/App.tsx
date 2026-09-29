@@ -13,6 +13,7 @@ import { PricingModal } from './components/PricingModal';
 import { MediaKitModal } from './components/MediaKitModal';
 import { EngagementTracker } from './components/EngagementTracker';
 import { LandingPageView } from './components/LandingPageView';
+import { GrammarCheckerModal } from './components/GrammarCheckerModal';
 
 export default function App() {
   const [theme, setTheme] = useState<ThemeMode>(() => {
@@ -85,6 +86,25 @@ export default function App() {
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
   const [isMediaKitModalOpen, setIsMediaKitModalOpen] = useState(false);
   const [isTrackerModalOpen, setIsTrackerModalOpen] = useState(false);
+
+  // Grammar Checker Modal state
+  const [grammarModal, setGrammarModal] = useState<{
+    isOpen: boolean;
+    text: string;
+    onApply: (fixedText: string) => void;
+  }>({
+    isOpen: false,
+    text: '',
+    onApply: () => {},
+  });
+
+  const handleOpenGrammarChecker = (text: string, onApply: (fixedText: string) => void) => {
+    setGrammarModal({
+      isOpen: true,
+      text,
+      onApply,
+    });
+  };
 
   // Sync to local storage
   useEffect(() => {
@@ -268,6 +288,7 @@ export default function App() {
                 weights={weights}
                 onUpdateTweetMetrics={handleUpdateTweetMetrics}
                 theme={theme}
+                onOpenGrammarChecker={handleOpenGrammarChecker}
               />
             </div>
           )}
@@ -290,6 +311,7 @@ export default function App() {
                 onOpenMediaKit={() => setIsMediaKitModalOpen(true)}
                 onOpenTracker={() => setIsTrackerModalOpen(true)}
                 allFeedTweets={tweets}
+                onOpenGrammarChecker={handleOpenGrammarChecker}
               />
             </div>
           )}
@@ -371,6 +393,19 @@ export default function App() {
             />
           </div>
         </div>
+      )}
+
+      {/* Grammar & Clarity Checker Modal */}
+      {grammarModal.isOpen && (
+        <GrammarCheckerModal
+          initialText={grammarModal.text}
+          onClose={() => setGrammarModal((prev) => ({ ...prev, isOpen: false }))}
+          onApplyText={(fixedText) => {
+            grammarModal.onApply(fixedText);
+            setGrammarModal((prev) => ({ ...prev, isOpen: false }));
+          }}
+          theme={theme}
+        />
       )}
     </div>
   );

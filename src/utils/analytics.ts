@@ -1,5 +1,5 @@
 import JSZip from 'jszip';
-import { Tweet, TweetMetrics, ViralAnalysis, AlgorithmWeights, HookVariation } from '../types';
+import { Tweet, TweetMetrics, ViralAnalysis, AlgorithmWeights, HookVariation, GrammarIssue, GrammarCheckResult } from '../types';
 import { EXTENSION_FILES } from '../data/extensionFiles';
 
 export const DEFAULT_ALGORITHM_WEIGHTS: AlgorithmWeights = {
@@ -377,4 +377,307 @@ export function checkViralAlert(tweet: Tweet, avgScore = 78, avgBookmarks = 1200
   }
   return { isViral: false, multiplier: 1, reason: '' };
 }
+
+// Built-in Grammar, Clarity, and Flow Rules for Instant Client-Side Checking
+interface GrammarRule {
+  id: string;
+  pattern: RegExp;
+  replacement: string | ((match: string, ...groups: string[]) => string);
+  explanation: string;
+  type: GrammarIssue['type'];
+}
+
+const GRAMMAR_RULES: GrammarRule[] = [
+  // 1. Typos and common misspellings
+  { id: 'typo-the', pattern: /\bteh\b/gi, replacement: 'the', explanation: 'Misspelling of "the"', type: 'spelling' },
+  { id: 'typo-receive', pattern: /\brecieve\b/gi, replacement: 'receive', explanation: 'Rule: "I before E except after C"', type: 'spelling' },
+  { id: 'typo-separate', pattern: /\bseperate\b/gi, replacement: 'separate', explanation: 'Spelling error ("separate" contains two "a"s)', type: 'spelling' },
+  { id: 'typo-definitely', pattern: /\bdefinately\b/gi, replacement: 'definitely', explanation: 'Spelling error: write "definitely"', type: 'spelling' },
+  { id: 'typo-until', pattern: /\buntill\b/gi, replacement: 'until', explanation: '"Until" is spelled with a single "l"', type: 'spelling' },
+  { id: 'typo-alot', pattern: /\balot\b/gi, replacement: 'a lot', explanation: '"A lot" is two distinct words', type: 'spelling' },
+  { id: 'typo-occurred', pattern: /\boccured\b/gi, replacement: 'occurred', explanation: '"Occurred" requires double "r"', type: 'spelling' },
+  { id: 'typo-calendar', pattern: /\bcalender\b/gi, replacement: 'calendar', explanation: 'Spelling error: write "calendar"', type: 'spelling' },
+  { id: 'typo-government', pattern: /\bgoverment\b/gi, replacement: 'government', explanation: 'Missing the "n" in "government"', type: 'spelling' },
+  { id: 'typo-necessary', pattern: /\bneccessary\b/gi, replacement: 'necessary', explanation: 'Spelling error (one "c", two "s"s)', type: 'spelling' },
+  { id: 'typo-tomorrow', pattern: /\btommorrow\b/gi, replacement: 'tomorrow', explanation: 'One "m" and two "r"s in "tomorrow"', type: 'spelling' },
+  { id: 'typo-environment', pattern: /\benviroment\b/gi, replacement: 'environment', explanation: 'Missing "n" in "environment"', type: 'spelling' },
+  { id: 'typo-argument', pattern: /\barguement\b/gi, replacement: 'argument', explanation: '"Argument" drops the middle "e"', type: 'spelling' },
+  { id: 'typo-truly', pattern: /\btruely\b/gi, replacement: 'truly', explanation: '"Truly" has no "e"', type: 'spelling' },
+  { id: 'typo-writing', pattern: /\bwritting\b/gi, replacement: 'writing', explanation: '"Writing" has one "t"', type: 'spelling' },
+  { id: 'typo-together', pattern: /\btogather\b/gi, replacement: 'together', explanation: 'Spelling error: write "together"', type: 'spelling' },
+  { id: 'typo-experience', pattern: /\bexperiance\b/gi, replacement: 'experience', explanation: 'Spelling error: write "experience"', type: 'spelling' },
+  { id: 'typo-believe', pattern: /\bbeleive\b/gi, replacement: 'believe', explanation: 'Spelling error: "I before E" in "believe"', type: 'spelling' },
+
+  // 2. Homophones and Grammar confusions
+  { 
+    id: 'homophone-your-welcome', 
+    pattern: /\byour\s+(welcome|invited|doing|going|correct|right\s+about)\b/gi, 
+    replacement: (_m, g1) => `you're ${g1}`, 
+    explanation: 'Use "you\'re" (contraction of "you are")', 
+    type: 'grammar' 
+  },
+  { 
+    id: 'homophone-youre-possessive', 
+    pattern: /\byou're\s+(code|post|tweet|metrics|account|audience|product|startup)\b/gi, 
+    replacement: (_m, g1) => `your ${g1}`, 
+    explanation: 'Use possessive "your" instead of "you\'re"', 
+    type: 'grammar' 
+  },
+  { 
+    id: 'homophone-there-existential', 
+    pattern: /\btheir\s+(is|are|was|were)\b/gi, 
+    replacement: (_m, g1) => `there ${g1}`, 
+    explanation: 'Use "there" for existential statement or location', 
+    type: 'grammar' 
+  },
+  { 
+    id: 'homophone-their-possessive', 
+    pattern: /\bthere\s+(startup|company|product|post|team|founder|code)\b/gi, 
+    replacement: (_m, g1) => `their ${g1}`, 
+    explanation: 'Use possessive "their" instead of "there"', 
+    type: 'grammar' 
+  },
+  { 
+    id: 'homophone-its-contraction', 
+    pattern: /\bits\s+(working|amazing|viral|happening|time|going|hard)\b/gi, 
+    replacement: (_m, g1) => `it's ${g1}`, 
+    explanation: 'Use "it\'s" (contraction of "it is")', 
+    type: 'grammar' 
+  },
+  { 
+    id: 'homophone-its-possessive', 
+    pattern: /\bit's\s+(features|reach|algorithm|growth|metrics|impressions)\b/gi, 
+    replacement: (_m, g1) => `its ${g1}`, 
+    explanation: 'Use "its" (possessive pronoun without apostrophe)', 
+    type: 'grammar' 
+  },
+  { 
+    id: 'grammar-modal-of', 
+    pattern: /\b(could|should|would)\s+of\b/gi, 
+    replacement: (_m, g1) => `${g1} have`, 
+    explanation: 'Use "have" instead of "of" after modal verbs ("could have")', 
+    type: 'grammar' 
+  },
+  { 
+    id: 'grammar-loose-lose', 
+    pattern: /\bloose\s+(money|followers|traction|reach|focus|customers|sales)\b/gi, 
+    replacement: (_m, g1) => `lose ${g1}`, 
+    explanation: 'Use "lose" (verb) instead of "loose" (opposite of tight)', 
+    type: 'grammar' 
+  },
+  { 
+    id: 'grammar-subject-verb-we-was', 
+    pattern: /\bwe\s+was\b/gi, 
+    replacement: 'we were', 
+    explanation: 'Subject-verb agreement: use "we were"', 
+    type: 'grammar' 
+  },
+  { 
+    id: 'grammar-subject-verb-they-was', 
+    pattern: /\bthey\s+was\b/gi, 
+    replacement: 'they were', 
+    explanation: 'Subject-verb agreement: use "they were"', 
+    type: 'grammar' 
+  },
+
+  // 3. Punctuation & Formatting
+  { 
+    id: 'punct-standalone-i', 
+    pattern: /\b(i)\b/g, 
+    replacement: 'I', 
+    explanation: 'Capitalize the standalone personal pronoun "I"', 
+    type: 'punctuation' 
+  },
+  { 
+    id: 'punct-space-before', 
+    pattern: /([A-Za-z0-9])\s+([,\.!\?;:])/g, 
+    replacement: '$1$2', 
+    explanation: 'Remove erroneous space before punctuation mark', 
+    type: 'punctuation' 
+  },
+  { 
+    id: 'punct-excessive-marks', 
+    pattern: /([?!]){3,}/g, 
+    replacement: '$1', 
+    explanation: 'Excessive punctuation looks spammy under X algorithm filters', 
+    type: 'punctuation' 
+  },
+  { 
+    id: 'punct-excessive-dots', 
+    pattern: /\.{4,}/g, 
+    replacement: '...', 
+    explanation: 'Standardize excessive periods to standard 3-dot ellipsis', 
+    type: 'punctuation' 
+  },
+
+  // 4. Wordiness & Conciseness (crucial for Twitter character economy)
+  { 
+    id: 'wordiness-in-order-to', 
+    pattern: /\bin\s+order\s+to\b/gi, 
+    replacement: 'to', 
+    explanation: 'Wordiness: "to" saves 8 characters with zero loss in punchiness', 
+    type: 'wordiness' 
+  },
+  { 
+    id: 'wordiness-due-to-the-fact', 
+    pattern: /\bdue\s+to\s+the\s+fact\s+that\b/gi, 
+    replacement: 'because', 
+    explanation: 'Wordiness: replace with "because" for faster reader flow', 
+    type: 'wordiness' 
+  },
+  { 
+    id: 'wordiness-at-present-time', 
+    pattern: /\bat\s+the\s+present\s+time\b/gi, 
+    replacement: 'now', 
+    explanation: 'Wordiness: replace with "now" or "currently"', 
+    type: 'wordiness' 
+  },
+  { 
+    id: 'wordiness-each-and-every', 
+    pattern: /\beach\s+and\s+every\b/gi, 
+    replacement: 'every', 
+    explanation: 'Redundant phrasing: "every" is cleaner and crisper', 
+    type: 'wordiness' 
+  },
+  { 
+    id: 'wordiness-very-unique', 
+    pattern: /\bvery\s+unique\b/gi, 
+    replacement: 'unique', 
+    explanation: '"Unique" already means one-of-a-kind; remove "very"', 
+    type: 'wordiness' 
+  },
+  { 
+    id: 'wordiness-needless-to-say', 
+    pattern: /\bneedless\s+to\s+say,?\s*/gi, 
+    replacement: '', 
+    explanation: 'Throat-clearing phrase that slows reader engagement; cut it', 
+    type: 'wordiness' 
+  },
+  { 
+    id: 'wordiness-at-end-of-day', 
+    pattern: /\bat\s+the\s+end\s+of\s+the\s+day,?\s*/gi, 
+    replacement: 'Ultimately, ', 
+    explanation: 'Overused cliché; replace with "Ultimately" for authority', 
+    type: 'wordiness' 
+  },
+];
+
+/**
+ * Checks text for grammar, spelling, punctuation, and wordiness issues.
+ * Returns structured issues with replacement suggestions and overall clarity score.
+ */
+export function checkGrammarAndClarity(text: string): GrammarCheckResult {
+  if (!text || text.trim().length === 0) {
+    return {
+      hasIssues: false,
+      score: 100,
+      cleanText: text,
+      issues: [],
+      summary: 'No text provided to check.',
+    };
+  }
+
+  const issues: GrammarIssue[] = [];
+  let workingText = text;
+
+  // Run through rule definitions
+  for (const rule of GRAMMAR_RULES) {
+    // Reset regex state
+    const regex = new RegExp(rule.pattern.source, rule.pattern.flags);
+    let match: RegExpExecArray | null;
+
+    // Use while loop if global, or single match if not
+    while ((match = regex.exec(text)) !== null) {
+      const matchText = match[0];
+      let repl = '';
+      if (typeof rule.replacement === 'function') {
+        repl = (rule.replacement as any)(matchText, ...match.slice(1));
+      } else {
+        repl = matchText.replace(rule.pattern, rule.replacement);
+      }
+
+      // Avoid duplicates
+      const exists = issues.some(
+        (iss) => iss.original.toLowerCase() === matchText.toLowerCase() && iss.explanation === rule.explanation
+      );
+
+      if (!exists && matchText !== repl) {
+        issues.push({
+          id: `${rule.id}-${issues.length}`,
+          original: matchText,
+          replacement: repl,
+          explanation: rule.explanation,
+          type: rule.type,
+        });
+      }
+
+      if (!regex.global) break;
+    }
+  }
+
+  // Calculate cleanText by applying all discovered replacements
+  let cleanText = text;
+  for (const rule of GRAMMAR_RULES) {
+    if (typeof rule.replacement === 'function') {
+      cleanText = cleanText.replace(rule.pattern, rule.replacement as any);
+    } else {
+      cleanText = cleanText.replace(rule.pattern, rule.replacement);
+    }
+  }
+
+  // Score calculation: start at 100, penalize based on issues
+  const penalty = issues.reduce((acc, issue) => {
+    if (issue.type === 'grammar') return acc + 10;
+    if (issue.type === 'spelling') return acc + 8;
+    if (issue.type === 'punctuation') return acc + 5;
+    if (issue.type === 'wordiness') return acc + 4;
+    return acc + 5;
+  }, 0);
+
+  const score = Math.max(35, Math.min(100, 100 - penalty));
+
+  let summary = 'Text is clean, polished, and ready to post.';
+  if (issues.length > 0) {
+    const counts = {
+      spelling: issues.filter((i) => i.type === 'spelling').length,
+      grammar: issues.filter((i) => i.type === 'grammar').length,
+      punctuation: issues.filter((i) => i.type === 'punctuation').length,
+      wordiness: issues.filter((i) => i.type === 'wordiness').length,
+    };
+    const parts = [];
+    if (counts.grammar > 0) parts.push(`${counts.grammar} grammar`);
+    if (counts.spelling > 0) parts.push(`${counts.spelling} spelling`);
+    if (counts.punctuation > 0) parts.push(`${counts.punctuation} punctuation`);
+    if (counts.wordiness > 0) parts.push(`${counts.wordiness} conciseness`);
+    summary = `Found ${issues.length} suggested fix${issues.length > 1 ? 'es' : ''} (${parts.join(', ')}).`;
+  }
+
+  return {
+    hasIssues: issues.length > 0,
+    score,
+    cleanText,
+    issues,
+    summary,
+  };
+}
+
+/**
+ * Apply a single grammar issue fix to text.
+ */
+export function applyGrammarFix(text: string, issue: GrammarIssue): string {
+  // Replace the first occurrence of original text with replacement
+  return text.replace(issue.original, issue.replacement);
+}
+
+/**
+ * Apply all grammar fixes sequentially to text.
+ */
+export function applyAllGrammarFixes(text: string, issues: GrammarIssue[]): string {
+  let result = text;
+  for (const issue of issues) {
+    result = result.replace(issue.original, issue.replacement);
+  }
+  return result;
+}
+
 

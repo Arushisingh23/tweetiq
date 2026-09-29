@@ -19,9 +19,11 @@ import {
   BookOpen,
   X,
   Filter,
-  Check
+  Check,
+  SpellCheck,
+  AlertTriangle
 } from 'lucide-react';
-import { calculateLiveTweetScore, detectTweetIntent } from '../utils/analytics';
+import { calculateLiveTweetScore, detectTweetIntent, checkGrammarAndClarity } from '../utils/analytics';
 
 interface TwitterFeedProps {
   tweets: Tweet[];
@@ -32,6 +34,7 @@ interface TwitterFeedProps {
   weights: AlgorithmWeights;
   onUpdateTweetMetrics: (tweetId: string, updatedMetrics: Partial<TweetMetrics>, toggledKey?: 'like' | 'retweet' | 'bookmark') => void;
   theme: ThemeMode;
+  onOpenGrammarChecker?: (text: string, onApply: (fixedText: string) => void) => void;
 }
 
 export const TwitterFeed: React.FC<TwitterFeedProps> = ({
@@ -43,6 +46,7 @@ export const TwitterFeed: React.FC<TwitterFeedProps> = ({
   weights,
   onUpdateTweetMetrics,
   theme,
+  onOpenGrammarChecker,
 }) => {
   const isDark = theme === 'dark';
   const [activeTab, setActiveTab] = useState<'for_you' | 'following'>('for_you');
@@ -50,9 +54,10 @@ export const TwitterFeed: React.FC<TwitterFeedProps> = ({
   const [newTweetText, setNewTweetText] = useState('');
   const [includeImage, setIncludeImage] = useState(false);
 
-  // Live composer score
+  // Live composer score & grammar check
   const composerScore = calculateLiveTweetScore(newTweetText, undefined, includeImage, weights);
   const composerDetectedIntent = newTweetText.trim().length > 5 ? detectTweetIntent({ text: newTweetText }) : 'general';
+  const composerGrammar = newTweetText.trim().length > 3 ? checkGrammarAndClarity(newTweetText) : null;
 
   // Counts for filters
   const allCount = tweets.length;
@@ -286,6 +291,22 @@ export const TwitterFeed: React.FC<TwitterFeedProps> = ({
                       Detected: Educational Post
                     </span>
                   )}
+
+                  {/* Grammar status in pill */}
+                  {composerGrammar && composerGrammar.hasIssues && (
+                    <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                      <AlertTriangle className="w-3 h-3 text-rose-400" />
+                      <span>{composerGrammar.issues.length} grammar fix{composerGrammar.issues.length > 1 ? 'es' : ''}</span>
+                      <button
+                        type="button"
+                        onClick={() => setNewTweetText(composerGrammar.cleanText)}
+                        className="ml-1 text-[10px] underline hover:text-white"
+                        title="Auto-apply fixes"
+                      >
+                        Auto-Fix
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {String(composerScore.details.hasLink).includes('Suppression') && (
@@ -299,17 +320,42 @@ export const TwitterFeed: React.FC<TwitterFeedProps> = ({
             <div className={`flex items-center justify-between pt-2 border-t ${
               isDark ? 'border-[#2f3336]' : 'border-gray-200'
             }`}>
-              <button
-                type="button"
-                onClick={() => setIncludeImage(!includeImage)}
-                className={`p-1.5 rounded-full hover:bg-[#1d9bf0]/10 transition-colors flex items-center gap-1 text-xs ${
-                  includeImage ? 'text-[#10b981]' : 'text-[#1d9bf0]'
-                }`}
-                title="Add Image"
-              >
-                <ImageIcon className="w-4 h-4" />
-                <span className="text-[11px]">{includeImage ? 'Image Added' : 'Add Image'}</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIncludeImage(!includeImage)}
+                  className={`p-1.5 rounded-full hover:bg-[#1d9bf0]/10 transition-colors flex items-center gap-1 text-xs ${
+                    includeImage ? 'text-[#10b981]' : 'text-[#1d9bf0]'
+                  }`}
+                  title="Add Image"
+                >
+                  <ImageIcon className="w-4 h-4" />
+                  <span className="text-[11px]">{includeImage ? 'Image Added' : 'Add Image'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onOpenGrammarChecker) {
+                      onOpenGrammarChecker(newTweetText, (fixed) => setNewTweetText(fixed));
+                    } else if (composerGrammar) {
+                      setNewTweetText(composerGrammar.cleanText);
+                    }
+                  }}
+                  disabled={!newTweetText.trim()}
+                  className={`p-1.5 rounded-full hover:bg-[#1d9bf0]/10 disabled:opacity-40 transition-colors flex items-center gap-1 text-xs ${
+                    composerGrammar && composerGrammar.hasIssues ? 'text-amber-500 font-bold' : 'text-[#1d9bf0]'
+                  }`}
+                  title="Check Grammar & Clarity"
+                >
+                  <SpellCheck className="w-4 h-4" />
+                  <span className="text-[11px]">
+                    {composerGrammar && composerGrammar.hasIssues 
+                      ? `${composerGrammar.issues.length} Fix${composerGrammar.issues.length > 1 ? 'es' : ''}`
+                      : 'Check Grammar'}
+                  </span>
+                </button>
+              </div>
 
               <div className="flex items-center gap-3">
                 <span

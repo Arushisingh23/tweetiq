@@ -168,3 +168,20 @@ export interface DailyEngagementLog {
   tweetsCount: number;   // e.g. 3
   notes?: string;
 }
+
+export interface GrammarIssue {
+  id: string;
+  original: string;
+  replacement: string;
+  explanation: string;
+  type: 'grammar' | 'spelling' | 'punctuation' | 'clarity' | 'wordiness';
+}
+
+export interface GrammarCheckResult {
+  hasIssues: boolean;
+  score: number; // 0 to 100 grammar & clarity score
+  cleanText: string;
+  issues: GrammarIssue[];
+  summary: string;
+}
+

@@ -259,6 +259,123 @@ Return pure JSON only.`;
   }
 });
 
+// API endpoint: AI Grammar & Clarity Checker
+app.post('/api/check-grammar', async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text || typeof text !== 'string') {
+      return res.status(400).json({ error: 'Text is required' });
+    }
+
+    if (ai) {
+      const prompt = `You are TweetIQ's Expert Twitter/X Copyeditor and Grammar Engine.
+Proofread this tweet for grammar, spelling, punctuation, typos, subject-verb agreement, and Twitter readability/conciseness:
+"${text}"
+
+Identify every error or wordy phrase.
+Return JSON with this exact schema:
+{
+  "score": number (0 to 100 grammar and clarity score),
+  "summary": string (1 brief sentence describing issues found),
+  "cleanText": string (the complete tweet with all fixes applied),
+  "issues": [
+    {
+      "id": "iss-1",
+      "original": "the exact misspelled or flawed word/phrase from the input",
+      "replacement": "the corrected replacement",
+      "explanation": "concise explanation of why this fix is needed",
+      "type": "grammar" | "spelling" | "punctuation" | "clarity" | "wordiness"
+    }
+  ]
+}
+Return pure JSON only without markdown fences.`;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.8-flash',
+        contents: prompt,
+      });
+
+      const responseText = response.text || '';
+      const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+      try {
+        const parsed = JSON.parse(cleanJson);
+        return res.json({
+          success: true,
+          result: {
+            hasIssues: Array.isArray(parsed.issues) && parsed.issues.length > 0,
+            score: typeof parsed.score === 'number' ? parsed.score : 95,
+            cleanText: parsed.cleanText || text,
+            issues: Array.isArray(parsed.issues) ? parsed.issues : [],
+            summary: parsed.summary || 'Grammar check completed.',
+          },
+        });
+      } catch {
+        // Fall back to rule-based checker below
+      }
+    }
+
+    // High-fidelity algorithmic rule fallback
+    const result = runServerGrammarCheck(text);
+    return res.json({ success: true, result });
+  } catch (error) {
+    console.error('Error in check-grammar:', error);
+    const result = runServerGrammarCheck(req.body?.text || '');
+    return res.json({ success: true, result });
+  }
+});
+
+function runServerGrammarCheck(text: string) {
+  const issues: any[] = [];
+  const rules = [
+    { pattern: /\bteh\b/gi, replacement: 'the', explanation: 'Misspelling of "the"', type: 'spelling' },
+    { pattern: /\brecieve\b/gi, replacement: 'receive', explanation: 'Rule: "I before E except after C"', type: 'spelling' },
+    { pattern: /\bseperate\b/gi, replacement: 'separate', explanation: 'Spelling error: write "separate"', type: 'spelling' },
+    { pattern: /\bdefinately\b/gi, replacement: 'definitely', explanation: 'Spelling error: write "definitely"', type: 'spelling' },
+    { pattern: /\buntill\b/gi, replacement: 'until', explanation: '"Until" has only one "l"', type: 'spelling' },
+    { pattern: /\balot\b/gi, replacement: 'a lot', explanation: '"A lot" is two words', type: 'spelling' },
+    { pattern: /\boccured\b/gi, replacement: 'occurred', explanation: '"Occurred" requires double "r"', type: 'spelling' },
+    { pattern: /\bcalender\b/gi, replacement: 'calendar', explanation: 'Spelling error: write "calendar"', type: 'spelling' },
+    { pattern: /\bgoverment\b/gi, replacement: 'government', explanation: 'Missing the "n" in "government"', type: 'spelling' },
+    { pattern: /\bneccessary\b/gi, replacement: 'necessary', explanation: 'Spelling error: write "necessary"', type: 'spelling' },
+    { pattern: /\btommorrow\b/gi, replacement: 'tomorrow', explanation: 'Tomorrow has one "m" and two "r"s', type: 'spelling' },
+    { pattern: /\b(i)\b/g, replacement: 'I', explanation: 'Capitalize standalone "I"', type: 'punctuation' },
+    { pattern: /([A-Za-z0-9])\s+([,\.!\?;:])/g, replacement: '$1$2', explanation: 'Remove space before punctuation', type: 'punctuation' },
+    { pattern: /\bin\s+order\s+to\b/gi, replacement: 'to', explanation: 'Wordy: "to" is punchier and saves space', type: 'wordiness' },
+    { pattern: /\bdue\s+to\s+the\s+fact\s+that\b/gi, replacement: 'because', explanation: 'Wordy: replace with "because"', type: 'wordiness' },
+    { pattern: /\byour\s+(welcome|invited|doing|going)\b/gi, replacement: "you're", explanation: 'Use "you\'re" instead of "your"', type: 'grammar' },
+    { pattern: /\bits\s+(working|amazing|viral|happening|time)\b/gi, replacement: "it's", explanation: 'Use "it\'s" (contraction of "it is")', type: 'grammar' },
+    { pattern: /\b(could|should|would)\s+of\b/gi, replacement: '$1 have', explanation: 'Use "have" instead of "of"', type: 'grammar' },
+  ];
+
+  let cleanText = text;
+  rules.forEach((rule, idx) => {
+    let match: RegExpExecArray | null;
+    const regex = new RegExp(rule.pattern.source, rule.pattern.flags);
+    while ((match = regex.exec(text)) !== null) {
+      issues.push({
+        id: `srv-iss-${idx}-${issues.length}`,
+        original: match[0],
+        replacement: match[0].replace(rule.pattern, rule.replacement),
+        explanation: rule.explanation,
+        type: rule.type,
+      });
+      if (!regex.global) break;
+    }
+    cleanText = cleanText.replace(rule.pattern, rule.replacement);
+  });
+
+  const penalty = issues.length * 8;
+  const score = Math.max(40, 100 - penalty);
+
+  return {
+    hasIssues: issues.length > 0,
+    score,
+    cleanText,
+    issues,
+    summary: issues.length > 0 ? `Detected ${issues.length} potential grammar & clarity improvements.` : 'Text is clean and polished.',
+  };
+}
+
 
 function calculateAlgorithmicDiagnostic(text: string, metrics?: any) {
   const words = text.trim().split(/\s+/).length;

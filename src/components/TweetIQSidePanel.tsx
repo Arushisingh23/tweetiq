@@ -22,9 +22,12 @@ import {
   Download,
   TrendingUp,
   Briefcase,
-  BookOpen
+  BookOpen,
+  SpellCheck,
+  CheckCheck,
+  AlertCircle
 } from 'lucide-react';
-import { calculateLiveTweetScore, exportTweetsAsCsv, detectTweetIntent } from '../utils/analytics';
+import { calculateLiveTweetScore, exportTweetsAsCsv, detectTweetIntent, checkGrammarAndClarity } from '../utils/analytics';
 import { INITIAL_SCHEDULED_QUEUE, EVERGREEN_TWEETS_RECYCLER } from '../data/tweetiqData';
 
 interface TweetIQSidePanelProps {
@@ -42,6 +45,7 @@ interface TweetIQSidePanelProps {
   onOpenMediaKit: () => void;
   onOpenTracker?: () => void;
   allFeedTweets: Tweet[];
+  onOpenGrammarChecker?: (text: string, onApply: (fixedText: string) => void) => void;
 }
 
 export const TweetIQSidePanel: React.FC<TweetIQSidePanelProps> = ({
@@ -57,6 +61,7 @@ export const TweetIQSidePanel: React.FC<TweetIQSidePanelProps> = ({
   onOpenMediaKit,
   onOpenTracker,
   allFeedTweets,
+  onOpenGrammarChecker,
 }) => {
   const isDark = theme === 'dark';
 
@@ -107,11 +112,12 @@ export const TweetIQSidePanel: React.FC<TweetIQSidePanelProps> = ({
   const [aiLoading, setAiLoading] = useState(false);
   const [generatedDraft, setGeneratedDraft] = useState<string | null>(null);
 
-  // Score
+  // Score & Grammar
   const scoreResult = calculateLiveTweetScore(draftText, undefined, false, weights);
   const words = draftText.trim().split(/\s+/).filter(Boolean).length;
   const chars = draftText.length;
   const hasLink = draftText.includes('http://') || draftText.includes('https://');
+  const draftGrammar = draftText.trim().length > 3 ? checkGrammarAndClarity(draftText) : null;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(draftText);
@@ -286,6 +292,23 @@ export const TweetIQSidePanel: React.FC<TweetIQSidePanelProps> = ({
 
                 <div className="flex items-center gap-2">
                   <button
+                    onClick={() => {
+                      if (onOpenGrammarChecker) {
+                        onOpenGrammarChecker(draftText, (fixed) => setDraftText(fixed));
+                      } else if (draftGrammar) {
+                        setDraftText(draftGrammar.cleanText);
+                      }
+                    }}
+                    className={`font-semibold hover:underline flex items-center gap-1 ${
+                      draftGrammar && draftGrammar.hasIssues ? 'text-amber-500' : 'text-[#1d9bf0]'
+                    }`}
+                    title="Check Grammar & Clarity"
+                  >
+                    <SpellCheck className="w-3 h-3" />
+                    <span>{draftGrammar && draftGrammar.hasIssues ? `${draftGrammar.issues.length} Fixes` : 'Grammar'}</span>
+                  </button>
+
+                  <button
                     onClick={handleCopy}
                     className="font-medium hover:underline flex items-center gap-1 text-gray-600 dark:text-gray-300"
                   >
@@ -333,6 +356,62 @@ export const TweetIQSidePanel: React.FC<TweetIQSidePanelProps> = ({
                 />
               </div>
             </div>
+
+            {/* Live Grammar & Clarity Status Bar */}
+            {draftGrammar && (
+              <div className={`p-3 rounded-xl border flex items-center justify-between text-xs transition-colors ${
+                draftGrammar.hasIssues
+                  ? isDark ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' : 'border-amber-200 bg-amber-50 text-amber-900'
+                  : isDark ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400' : 'border-emerald-200 bg-emerald-50 text-emerald-900'
+              }`}>
+                <div className="flex items-center gap-2">
+                  {draftGrammar.hasIssues ? (
+                    <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
+                  ) : (
+                    <CheckCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+                  )}
+                  <div>
+                    <div className="font-bold flex items-center gap-1.5">
+                      <span>Grammar &amp; Clarity: {draftGrammar.score}/100</span>
+                      {draftGrammar.hasIssues && (
+                        <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-500 text-black font-bold">
+                          {draftGrammar.issues.length} fix{draftGrammar.issues.length > 1 ? 'es' : ''}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[11px] opacity-80 line-clamp-1">
+                      {draftGrammar.summary}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {draftGrammar.hasIssues ? (
+                    <>
+                      <button
+                        onClick={() => setDraftText(draftGrammar.cleanText)}
+                        className="px-2 py-1 rounded bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] transition-colors"
+                        title="Auto-fix all grammar & spelling errors"
+                      >
+                        Fix All
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (onOpenGrammarChecker) {
+                            onOpenGrammarChecker(draftText, (fixed) => setDraftText(fixed));
+                          }
+                        }}
+                        className="px-2 py-1 rounded border border-amber-500/40 text-amber-500 font-semibold text-[11px] hover:bg-amber-500/15 transition-colors"
+                      >
+                        Review
+                      </button>
+                    </>
+                  ) : (
+                    <span className="text-[11px] font-bold text-emerald-500">✓ Polished</span>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Schedule Notice if clicked */}
             {scheduleSuccess && (
