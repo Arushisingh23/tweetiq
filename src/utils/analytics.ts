@@ -1,3 +1,14 @@
+/**
+ * TweetIQ Algorithmic Analytics & Grammar Engine
+ * Features contained:
+ * - calculateLiveTweetScore: Heuristic scoring for viral potential, readability, and link penalty
+ * - checkGrammarAndClarity: Instant 0ms browser-side grammar, spelling, punctuation, and conciseness checker
+ * - applyGrammarFix / applyAllGrammarFixes: Programmatic text correction utilities
+ * - detectTweetIntent: Categorizes tweets into educational, hiring, or general formats
+ * - buildExtensionZip: Assembles and zips the unpacked Chrome Extension for download
+ * - exportTweetsAsCsv: Data export for creator backups and metric auditing
+ * - checkViralAlert: Detects when a post's bookmark/retweet velocity outpaces baseline metrics
+ */
 import JSZip from 'jszip';
 import { Tweet, TweetMetrics, ViralAnalysis, AlgorithmWeights, HookVariation, GrammarIssue, GrammarCheckResult } from '../types';
 import { EXTENSION_FILES } from '../data/extensionFiles';

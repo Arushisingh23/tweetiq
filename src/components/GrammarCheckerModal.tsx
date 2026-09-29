@@ -1,3 +1,13 @@
+/**
+ * Grammar & Clarity Checker Modal Component
+ * Features contained:
+ * - Real-time Clarity Score indicator (0-100)
+ * - Category issue filtering: All, Spelling, Grammar, Punctuation, Conciseness
+ * - Visual diff cards with strikethrough original and green replacement
+ * - 1-Click "Fix All" and per-issue "Apply" buttons
+ * - "Deep AI Proofread" integration calling /api/check-grammar (Gemini 3.8 Flash)
+ * - Copy to clipboard and "Use Fixed Post" actions
+ */
 import React, { useState } from 'react';
 import { GrammarCheckResult, GrammarIssue, ThemeMode } from '../types';
 import { 

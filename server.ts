@@ -1,3 +1,13 @@
+/**
+ * TweetIQ Express Backend & AI Processing Engine
+ * Features contained:
+ * - /api/check-grammar: Proofreading and clarity engine using Gemini 3.8 Flash + algorithmic rules
+ * - /api/analyze-tweet: In-depth algorithmic viral hook & engagement diagnostic
+ * - /api/generate-hooks: Generates 5 viral hook variations (Contrarian, Data, Bookmarks, Story, Hard Truth)
+ * - /api/ghostwriter: Contextual AI ghostwriter mimicry based on top performing posts
+ * - /api/post-coach: Concrete data-grounded recommendations for what to post next
+ * - Vite Middleware: Dev server mounting and SPA production static serving
+ */
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
