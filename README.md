@@ -17,14 +17,18 @@ The table below describes what each feature file in this repository contains and
 | `src/App.tsx` | **Application Controller** | Primary state manager handling theme switching, modal routing, tweet collections, and views. |
 | `src/main.tsx` | **React Bootstrap** | Mounts the root React application into the DOM with strict mode and global styles. |
 | `src/index.css` | **Global Styles** | Tailwind CSS root directive and custom design tokens for light and dark modes. |
-| `src/types/index.ts` | **Type Definitions** | TypeScript contracts for Tweets, TweetMetrics, GrammarIssue, GrammarCheckResult, and AlgorithmWeights. |
+| `src/types/index.ts` | **Type Definitions** | TypeScript contracts for Tweets, TweetMetrics, GrammarIssue, GrammarCheckResult, AlgorithmWeights, DailyStreakData, and TweetOptimizationResult. |
 | `src/utils/analytics.ts` | **Core Algorithmic Engine** | Deterministic virality scoring, link penalties, client-side grammar & clarity rules, and CSV exporter. |
+| `src/utils/tweetOptimizer.ts` | **Smart Tweet Optimizer** | Automated grammar corrections, mobile readability layout, right hook formulas, contextual add-on generator, and algorithmic lift prediction. |
+| `src/utils/streak.ts` | **Daily Streak Tracker** | Consecutive active days calculator, calendar day reconciliation, streak freeze protection, and 7-day visualizer. |
 | `src/data/feedData.ts` | **Timeline Data** | Verified creator tweets and realistic metrics powering the interactive feed simulation. |
 | `src/data/tweetiqData.ts` | **Growth Templates** | Pre-built hook formulas, evergreen queue recycler, and engagement frameworks. |
 | `src/data/extensionFiles.ts` | **Chrome Extension Bundle** | Full Manifest V3 source code (background service worker, content scripts, overlay CSS, and popup HTML). |
 | `src/components/Navbar.tsx` | **Navigation Header** | Navigation bar with view switcher (Landing, Feed, Side Panel, Web Store), theme toggle, and export button. |
 | `src/components/TwitterFeed.tsx` | **Feed Simulator** | Twitter/X timeline interface with real-time reach score predictor, inline grammar alerts, and post filters. |
-| `src/components/TweetIQSidePanel.tsx` | **Growth Side Panel** | Docked assistant with tweet composer, live grammar badge, schedule queue, and reach breakdown. |
+| `src/components/TweetIQSidePanel.tsx` | **Growth Side Panel** | Docked extension assistant with clean composer, smart hook optimizer, live grammar checks, and reach analytics. |
+| `src/components/TweetOptimizerCard.tsx` | **Smart Optimizer & Hook Polisher** | Integrated card repairing grammatical errors, selecting optimal hooks, previewing algorithmic lift, and offering 1-click CTA/bookmark add-ons. |
+| `src/components/DailyStreakCounter.tsx` | **Daily Streak Counter** | Creator profile widget tracking consecutive days active, flame badges, 7-day mini calendar, streak freeze shields, and milestone multipliers. |
 | `src/components/GrammarCheckerModal.tsx`| **Grammar & Clarity Checker**| Interactive proofreader modal with clarity score, category filtering (Spelling, Grammar, Punctuation, Conciseness), and 1-click fixes. |
 | `src/components/DiagnosticModal.tsx` | **Algorithmic Teardown** | Deep post analysis breaking down curiosity gaps, link penalties, bookmark incentives, and hook grades. |
 | `src/components/HookRemixModal.tsx` | **Viral Hook Remixer** | Generates 5 high-converting hook variations (Contrarian, Data, Bookmark Goldmine, Story, Hard Truth). |

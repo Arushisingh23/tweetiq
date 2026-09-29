@@ -185,3 +185,34 @@ export interface GrammarCheckResult {
   summary: string;
 }
 
+export interface DailyStreakData {
+  currentStreak: number;
+  longestStreak: number;
+  lastActiveDate: string; // YYYY-MM-DD
+  todayActive: boolean;
+  history: string[]; // List of YYYY-MM-DD active days
+  freezesRemaining: number;
+  totalActiveDays: number;
+  consistencyScore: number; // e.g. 98%
+}
+
+export interface AddOnSuggestion {
+  id: string;
+  type: 'cta' | 'hook_stat' | 'bookmark_trigger' | 'question' | 'repost_hook';
+  label: string;
+  textToAdd: string;
+  impact: string;
+}
+
+export interface TweetOptimizationResult {
+  originalText: string;
+  polishedText: string;
+  fixedGrammarCount: number;
+  formattingImproved: boolean;
+  improvedHook: string;
+  predictedReachMultiplier: number;
+  projectedScoreDiff: number;
+  potentialBookmarksBoost: number;
+  addOnSuggestions: AddOnSuggestion[];
+}
+

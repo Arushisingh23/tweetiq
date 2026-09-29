@@ -21,9 +21,15 @@ import {
   Filter,
   Check,
   SpellCheck,
-  AlertTriangle
+  AlertTriangle,
+  Wand2,
+  PlusCircle,
+  TrendingUp,
+  ArrowRight
 } from 'lucide-react';
 import { calculateLiveTweetScore, detectTweetIntent, checkGrammarAndClarity } from '../utils/analytics';
+import { optimizeTweet } from '../utils/tweetOptimizer';
+import { TweetOptimizerCard } from './TweetOptimizerCard';
 
 interface TwitterFeedProps {
   tweets: Tweet[];
@@ -54,10 +60,12 @@ export const TwitterFeed: React.FC<TwitterFeedProps> = ({
   const [newTweetText, setNewTweetText] = useState('');
   const [includeImage, setIncludeImage] = useState(false);
 
-  // Live composer score & grammar check
+  // Live composer score & grammar check & auto-optimizer
+  const [showOptimizerPreview, setShowOptimizerPreview] = useState(false);
   const composerScore = calculateLiveTweetScore(newTweetText, undefined, includeImage, weights);
   const composerDetectedIntent = newTweetText.trim().length > 5 ? detectTweetIntent({ text: newTweetText }) : 'general';
   const composerGrammar = newTweetText.trim().length > 3 ? checkGrammarAndClarity(newTweetText) : null;
+  const optimization = newTweetText.trim().length > 8 ? optimizeTweet(newTweetText) : null;
 
   // Counts for filters
   const allCount = tweets.length;
@@ -317,6 +325,17 @@ export const TwitterFeed: React.FC<TwitterFeedProps> = ({
               </div>
             )}
 
+            {/* Embedded Smart Optimizer & Hook Polisher Card */}
+            {newTweetText.trim().length > 8 && (
+              <div className="mb-3">
+                <TweetOptimizerCard
+                  draftText={newTweetText}
+                  onApplyPolishedText={(polished) => setNewTweetText(polished)}
+                  theme={theme}
+                />
+              </div>
+            )}
+
             <div className={`flex items-center justify-between pt-2 border-t ${
               isDark ? 'border-[#2f3336]' : 'border-gray-200'
             }`}>
@@ -324,7 +343,7 @@ export const TwitterFeed: React.FC<TwitterFeedProps> = ({
                 <button
                   type="button"
                   onClick={() => setIncludeImage(!includeImage)}
-                  className={`p-1.5 rounded-full hover:bg-[#1d9bf0]/10 transition-colors flex items-center gap-1 text-xs ${
+                  className={`p-1.5 rounded-full hover:bg-[#1d9bf0]/10 transition-colors flex items-center gap-1 text-xs cursor-pointer ${
                     includeImage ? 'text-[#10b981]' : 'text-[#1d9bf0]'
                   }`}
                   title="Add Image"
@@ -336,23 +355,23 @@ export const TwitterFeed: React.FC<TwitterFeedProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    if (onOpenGrammarChecker) {
-                      onOpenGrammarChecker(newTweetText, (fixed) => setNewTweetText(fixed));
+                    if (optimization) {
+                      setNewTweetText(optimization.polishedText);
                     } else if (composerGrammar) {
                       setNewTweetText(composerGrammar.cleanText);
                     }
                   }}
                   disabled={!newTweetText.trim()}
-                  className={`p-1.5 rounded-full hover:bg-[#1d9bf0]/10 disabled:opacity-40 transition-colors flex items-center gap-1 text-xs ${
+                  className={`p-1.5 rounded-full hover:bg-[#1d9bf0]/10 disabled:opacity-40 transition-colors flex items-center gap-1 text-xs cursor-pointer ${
                     composerGrammar && composerGrammar.hasIssues ? 'text-amber-500 font-bold' : 'text-[#1d9bf0]'
                   }`}
-                  title="Check Grammar & Clarity"
+                  title="Auto-Polish Hook, Format & Grammar"
                 >
-                  <SpellCheck className="w-4 h-4" />
+                  <Wand2 className="w-4 h-4" />
                   <span className="text-[11px]">
                     {composerGrammar && composerGrammar.hasIssues 
-                      ? `${composerGrammar.issues.length} Fix${composerGrammar.issues.length > 1 ? 'es' : ''}`
-                      : 'Check Grammar'}
+                      ? `Fix & Polish (${composerGrammar.issues.length})`
+                      : 'Auto-Polish Hook'}
                   </span>
                 </button>
               </div>
@@ -442,7 +461,7 @@ export const TwitterFeed: React.FC<TwitterFeedProps> = ({
                         </span>
                       </div>
 
-                      {/* Post Intent Badge */}
+                      {/* Header Right: Intent Badge + Options Menu */}
                       <div className="shrink-0 flex items-center gap-1.5">
                         {intent === 'hiring' && (
                           <button

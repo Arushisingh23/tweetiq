@@ -14,6 +14,7 @@ import { MediaKitModal } from './components/MediaKitModal';
 import { EngagementTracker } from './components/EngagementTracker';
 import { LandingPageView } from './components/LandingPageView';
 import { GrammarCheckerModal } from './components/GrammarCheckerModal';
+import { recordTodayStreakActivity } from './utils/streak';
 
 export default function App() {
   const [theme, setTheme] = useState<ThemeMode>(() => {
@@ -134,6 +135,8 @@ export default function App() {
 
   // Handle publishing tweet to the feed simulator
   const handlePublishNewTweet = (text: string, mediaUrl?: string) => {
+    recordTodayStreakActivity();
+    window.dispatchEvent(new Event('tweetiq-activity-logged'));
     const { score, grade } = calculateLiveTweetScore(text, undefined, Boolean(mediaUrl), weights);
     const intent = detectTweetIntent({ text });
     const newTweet: Tweet = {
