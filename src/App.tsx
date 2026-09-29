@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Tweet, AlgorithmWeights, TweetMetrics, ThemeMode, LicenseState } from './types';
-import { INITIAL_TWEETS } from './data/mockTweets';
+import { INITIAL_TWEETS } from './data/feedData';
 import { DEFAULT_ALGORITHM_WEIGHTS, calculateLiveTweetScore, detectTweetIntent } from './utils/analytics';
 import { Navbar } from './components/Navbar';
 import { TwitterFeed } from './components/TwitterFeed';
@@ -120,7 +120,7 @@ export default function App() {
       id: `user-tweet-${Date.now()}`,
       author: {
         name: 'You (Creator)',
-        handle: 'creator_studio',
+        handle: 'alex_growth',
         avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
         verified: true,
         followers: '24.5K',

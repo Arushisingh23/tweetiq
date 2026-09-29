@@ -282,7 +282,7 @@ export const DiagnosticModal: React.FC<DiagnosticModalProps> = ({
               }}
               className="px-4 py-1.5 rounded-lg bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white font-semibold text-xs flex items-center gap-1.5 transition-colors"
             >
-              <span>Load into Studio</span>
+              <span>Load into Composer</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>

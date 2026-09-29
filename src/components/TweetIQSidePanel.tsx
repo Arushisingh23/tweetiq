@@ -157,7 +157,7 @@ export const TweetIQSidePanel: React.FC<TweetIQSidePanelProps> = ({
         isDark ? 'border-[#2f3336] bg-[#0c0d10]' : 'border-gray-100 bg-gray-50/80'
       }`}>
         <div className="flex items-center gap-1.5">
-          <span className="font-bold text-[11px] text-[#1d9bf0]">TweetIQ Studio</span>
+          <span className="font-bold text-[11px] text-[#1d9bf0]">TweetIQ Suite</span>
           {license.hasLifetime ? (
             <span className="text-[10px] text-emerald-500 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">
               ✓ Lifetime Pro

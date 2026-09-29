@@ -188,7 +188,7 @@ export const ChromeWebStoreView: React.FC<ChromeWebStoreViewProps> = ({
             <div className="space-y-2">
               <div className="flex items-center gap-2.5 flex-wrap">
                 <h1 className={`text-xl md:text-2xl font-black tracking-tight ${isDark ? 'text-[#e8eaed]' : 'text-gray-900'}`}>
-                  TweetIQ - Twitter / X Analytics, Scheduling &amp; AI Studio
+                  TweetIQ - Twitter &amp; X Analytics &amp; Growth Suite
                 </h1>
                 <span className="px-2 py-0.5 rounded-full bg-[#1d9bf0]/15 text-[#1d9bf0] text-[11px] font-bold flex items-center gap-1 border border-[#1d9bf0]/30">
                   <Sparkles className="w-3 h-3" />

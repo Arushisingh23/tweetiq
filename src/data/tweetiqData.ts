@@ -109,7 +109,7 @@ export const EVERGREEN_TWEETS_RECYCLER: Tweet[] = [
     id: 'old-1',
     author: {
       name: 'You (Creator)',
-      handle: 'creator_studio',
+      handle: 'alex_growth',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
       verified: true,
       followers: '24.5K',
@@ -133,7 +133,7 @@ export const EVERGREEN_TWEETS_RECYCLER: Tweet[] = [
     id: 'old-2',
     author: {
       name: 'You (Creator)',
-      handle: 'creator_studio',
+      handle: 'alex_growth',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
       verified: true,
       followers: '24.5K',
@@ -157,7 +157,7 @@ export const EVERGREEN_TWEETS_RECYCLER: Tweet[] = [
     id: 'old-3',
     author: {
       name: 'You (Creator)',
-      handle: 'creator_studio',
+      handle: 'alex_growth',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
       verified: true,
       followers: '24.5K',

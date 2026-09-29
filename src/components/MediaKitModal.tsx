@@ -38,7 +38,7 @@ export const MediaKitModal: React.FC<MediaKitModalProps> = ({
   };
 
   const creatorStats = {
-    handle: '@creator_studio',
+    handle: '@alex_growth',
     name: 'Alex Rivera',
     niche: 'B2B SaaS, AI Engineering & Indie Growth',
     followers: '24,520',
