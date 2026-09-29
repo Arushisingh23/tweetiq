@@ -1,0 +1,6 @@
+{
+  "name": "TweetIQ - Twitter & X Analytics & Growth Suite",
+  "description": "Chrome extension and growth analytics engine for Twitter / X. Predict viral score, inspect feed engagement metrics, optimize hooks, and export unpacked Chrome extension.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
