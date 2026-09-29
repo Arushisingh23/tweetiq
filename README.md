@@ -12,7 +12,7 @@ The table below describes what each feature file in this repository contains and
 | :--- | :--- | :--- |
 | `server.ts` | **Backend & AI Engine** | Express server hosting Gemini 3.8 Flash endpoints (`/api/check-grammar`, `/api/analyze-tweet`, `/api/generate-hooks`, `/api/ghostwriter`, `/api/post-coach`) with Vite middleware integration. |
 | `index.html` | **Application Entry Point** | HTML5 root document configured with typography, metadata, OpenGraph tags, and theme script. |
-| `metadata.json` | **Applet Metadata** | Project identification, description, and capability permissions for AI Studio deployment. |
+| `metadata.json` | **App Configuration** | Project identification, application description, and system permissions. |
 | `package.json` | **Dependencies & Scripts** | NPM configuration, build scripts (`dev`, `build`, `lint`), and package dependencies. |
 | `src/App.tsx` | **Application Controller** | Primary state manager handling theme switching, modal routing, tweet collections, and views. |
 | `src/main.tsx` | **React Bootstrap** | Mounts the root React application into the DOM with strict mode and global styles. |
